@@ -1,0 +1,17 @@
+# GigaChat API settings — шаблон.
+# Скопируйте этот файл в корень проекта под именем "GigaChat API settings.txt"
+# и подставьте свои данные из https://developers.sber.ru/giga-chat
+
+Данные для авторизации запросов к API GigaChat
+
+Client ID
+<ваш-client-id-uuid>
+
+Client Secret
+<ваш-client-secret>
+
+Scope
+GIGACHAT_API_PERS
+
+Authorization Key
+<base64(client_id:client_secret) — из личного кабинета, либо соберётся из пары выше>

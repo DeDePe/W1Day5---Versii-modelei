@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GigaChat Benchmark</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'class' };</script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .markdown-body h1,.markdown-body h2,.markdown-body h3 { font-weight:700; margin:.6em 0 .3em; }
+  .markdown-body p { margin:.4em 0; }
+  .markdown-body ul,.markdown-body ol { margin:.4em 0; padding-left:1.4em; }
+  .markdown-body ul { list-style:disc; } .markdown-body ol { list-style:decimal; }
+  .markdown-body code { background:rgba(148,163,184,.18); padding:.1em .35em; border-radius:.25em; font-size:.875em; }
+  .markdown-body pre { background:#0f172a; color:#e2e8f0; padding:.9em 1em; border-radius:.6em; overflow-x:auto; margin:.5em 0; font-size:.85em; line-height:1.5; }
+  .markdown-body pre code { background:transparent; padding:0; }
+  .markdown-body table { border-collapse:collapse; margin:.5em 0; width:100%; font-size:.85em; }
+  .markdown-body th,.markdown-body td { border:1px solid rgba(148,163,184,.3); padding:.35em .6em; text-align:left; }
+  .markdown-body blockquote { border-left:3px solid #6366f1; padding-left:.8em; margin:.5em 0; color:#94a3b8; }
+  .markdown-body a { color:#818cf8; text-decoration:underline; }
+  .skeleton { background:linear-gradient(90deg,rgba(148,163,184,.08) 25%,rgba(148,163,184,.22) 50%,rgba(148,163,184,.08) 75%); background-size:200% 100%; animation:sk 1.4s infinite; border-radius:.4em; }
+  @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  @keyframes pulse-border { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,0)} 50%{box-shadow:0 0 0 3px rgba(99,102,241,.35)} }
+  .generating { animation: pulse-border 1.6s infinite; }
+  @keyframes fade { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+  .katex { font-size: 1.05em; }
+  .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+</style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors">
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Header -->
+  <header class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-indigo-500/30">GB</div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">GigaChat Benchmark</h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Параллельное сравнение трёх моделей на одном промпте</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="config-status" class="text-xs px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400">проверка конфигурации…</span>
+      <button id="theme-toggle" class="w-9 h-9 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition" title="Тема">🌓</button>
+    </div>
+  </header>
+
+  <!-- Warnings -->
+  <div id="warnings" class="hidden mb-5 space-y-2"></div>
+
+  <!-- Prompt area -->
+  <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 mb-6">
+    <label class="block text-sm font-semibold mb-2 text-slate-600 dark:text-slate-300">Промпт</label>
+    <textarea id="prompt" rows="3" placeholder="Например: Объясни квантовую запутанность простыми словами и приведи пример на Python…"
+      class="w-full resize-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-transparent transition placeholder:text-slate-400"></textarea>
+    <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
+      <div class="flex items-center gap-2 flex-wrap" id="model-selects"></div>
+      <button id="run-btn" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 transition disabled:opacity-50 disabled:cursor-not-allowed">
+        <svg id="run-spinner" class="hidden animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+        <span id="run-label">Сравнить</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Results: exactly 3 columns -->
+  <main id="results" class="grid grid-cols-1 md:grid-cols-3 gap-5"></main>
+
+  <footer class="mt-10 text-center text-xs text-slate-400 dark:text-slate-600">
+    Стоимость рассчитывается по <code>pricing.json</code> · сертификат Сбера: SSL-проверка отключена
+  </footer>
+</div>
+
+<script>
+const state = { models: [], running: false, theme: localStorage.getItem('theme') || 'light' };
+
+// ---------- theme ----------
+function applyTheme(t) {
+  document.documentElement.classList.toggle('dark', t === 'dark');
+  localStorage.setItem('theme', t);
+}
+applyTheme(state.theme);
+document.getElementById('theme-toggle').onclick = () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(state.theme);
+};
+
+// ---------- markdown ----------
+marked.setOptions({ breaks: true, gfm: true });
+
+// ---------- LaTeX (KaTeX) ----------
+// GigaChat отдаёт математику в TeX-нотации ($...$, $$...$$, \(...\), \[...\]).
+// Рендерим её KaTeX-ом ДО marked, спрятав в плейсхолдеры, чтобы Markdown
+// не съел символы (_ * \) внутри формул.
+function renderMath(tex, displayMode) {
+  try { return katex.renderToString(tex, { displayMode, throwOnError: false }); }
+  catch (e) { return '<code class="text-rose-500">' + escapeHtml(tex) + '</code>'; }
+}
+function preprocessMath(src) {
+  const store = [];
+  // %%MATHn%% — HTML-безопасный сентинел (NUL-байт парсер HTML выбрасывает)
+  const keep = html => { store.push(html); return `%%MATH${store.length - 1}%%`; };
+  let out = src
+    .replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => keep(renderMath(tex.trim(), true)))
+    .replace(/\\\[([\s\S]+?)\\\]/g, (_, tex) => keep(renderMath(tex.trim(), true)))
+    .replace(/\\\(([\s\S]+?)\\\)/g, (_, tex) => keep(renderMath(tex.trim(), false)))
+    // $...$ — не пустой, открывающий $ не экранирован; одна строка, чтобы не ловить $ из кода-блоков
+    .replace(/(?<!\\)\$(?!\s)((?:[^$\n]|\\.)+?)\$(?!\d)/g, (_, tex) => keep(renderMath(tex.trim(), false)));
+  return { out, store };
+}
+function restoreMath(container, store) {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const targets = [];
+  while (walker.nextNode()) {
+    const n = walker.currentNode;
+    if (n.nodeValue.includes('%%MATH')) targets.push(n);
+  }
+  for (const n of targets) {
+    const frag = document.createDocumentFragment();
+    let rest = n.nodeValue, m;
+    const re = /%%MATH(\d+)%%/g;
+    while ((m = re.exec(rest))) {
+      if (m.index > 0) frag.appendChild(document.createTextNode(rest.slice(0, m.index)));
+      frag.appendChild(document.createRange().createContextualFragment(store[+m[1]]));
+      rest = rest.slice(m.index + m[0].length);
+      re.lastIndex = 0;
+    }
+    if (rest) frag.appendChild(document.createTextNode(rest));
+    n.parentNode.replaceChild(frag, n);
+  }
+}
+const md = s => {
+  const { out, store } = preprocessMath(s || '');
+  const d = document.createElement('div');
+  d.innerHTML = marked.parse(out);
+  restoreMath(d, store);
+  return d;
+};
+
+// ---------- config load ----------
+async function loadConfig() {
+  try {
+    const r = await fetch('/api/config');
+    const cfg = await r.json();
+    state.models = cfg.models;
+    const badge = document.getElementById('config-status');
+    const warns = cfg.warnings || [];
+    if (warns.length) {
+      badge.textContent = '⚠ конфигурация неполная';
+      badge.className = 'text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300';
+      const box = document.getElementById('warnings');
+      box.classList.remove('hidden');
+      box.innerHTML = warns.map(w => `
+        <div class="flex items-start gap-2 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-200">
+          <span>⚠</span><div>${w}<div class="mt-1 text-xs opacity-70">Создайте файлы в папке проекта и перезапустите сервер.</div></div>
+        </div>`).join('');
+    } else {
+      badge.textContent = `✓ ${cfg.models.length} моделей · ключ найден`;
+      badge.className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300';
+    }
+    buildModelSelects();
+  } catch (e) {
+    document.getElementById('config-status').textContent = '✗ сервер недоступен';
+  }
+}
+
+// ---------- model selects ----------
+function buildModelSelects() {
+  const wrap = document.getElementById('model-selects');
+  wrap.innerHTML = '';
+  if (!state.models.length) {
+    wrap.innerHTML = '<span class="text-xs text-slate-400">Модели не обнаружены — проверьте GigaChat API models.txt</span>';
+    return;
+  }
+  // дефолт: первые три чат-модели (не embeddings)
+  const chat = state.models.filter(m => !/embed/i.test(m.id));
+  const def = (chat.length >= 3 ? chat : state.models).slice(0, 3).map(m => m.id);
+  for (let i = 0; i < 3; i++) {
+    const sel = document.createElement('select');
+    sel.className = 'model-select text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition';
+    sel.innerHTML = state.models.map(m =>
+      `<option value="${m.id}" ${def[i] === m.id ? 'selected' : ''}>${m.id}${m.description ? ' — ' + escapeHtml(m.description).slice(0, 40) : ''}</option>`).join('');
+    const lab = document.createElement('span');
+    lab.className = 'text-[10px] uppercase tracking-wide text-slate-400 font-semibold mr-1';
+    lab.textContent = ['A', 'B', 'C'][i];
+    wrap.appendChild(lab); wrap.appendChild(sel);
+  }
+}
+
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ---------- run ----------
+const btn = document.getElementById('run-btn');
+btn.onclick = runBenchmark;
+document.getElementById('prompt').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runBenchmark();
+});
+
+async function runBenchmark() {
+  const promptEl = document.getElementById('prompt');
+  const prompt = promptEl.value.trim();
+  if (!prompt) { promptEl.focus(); return; }
+  const models = [...document.querySelectorAll('.model-select')].map(s => s.value);
+  if (state.running) return;
+  state.running = true;
+  btn.disabled = true;
+  document.getElementById('run-spinner').classList.remove('hidden');
+  document.getElementById('run-label').textContent = 'Генерация…';
+
+  renderSkeletons(models);
+  const t0 = performance.now();
+  try {
+    const resp = await fetch('/api/benchmark', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, models })
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) throw new Error(data.error || `HTTP ${resp.status}`);
+    renderResults(data.results);
+  } catch (e) {
+    renderError(models, e.message);
+  } finally {
+    state.running = false;
+    btn.disabled = false;
+    document.getElementById('run-spinner').classList.add('hidden');
+    document.getElementById('run-label').textContent = 'Сравнить';
+  }
+}
+
+// ---------- rendering ----------
+function card(model, extra = '') {
+  const m = state.models.find(x => x.id === model);
+  const desc = m && m.description ? `<span class="text-[10px] text-slate-400 font-normal">${escapeHtml(m.description)}</span>` : '';
+  return `
+  <div class="fade-in ${extra}">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-full">
+      <div class="p-4 border-b border-slate-100 dark:border-slate-800/60">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <span class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 text-sm font-bold">${escapeHtml(model)}</span>
+          ${desc}
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center" data-metrics></div>
+      </div>
+      <div class="p-4 text-sm leading-relaxed flex-1" data-body></div>
+      <div class="px-4 pb-3">
+        <button class="copy-btn w-full text-xs py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400" data-model="${escapeHtml(model)}">📋 Копировать ответ</button>
+      </div>
+      <div data-raw class="hidden">${escapeHtml(model)}</div>
+    </div>
+  </div>`;
+}
+
+function metricChip(icon, label, value, accent = 'text-slate-700 dark:text-slate-200') {
+  return `<div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg py-1.5 px-1">
+    <div class="text-[10px] text-slate-400 font-medium">${icon} ${label}</div>
+    <div class="text-xs font-bold ${accent}">${value}</div>
+  </div>`;
+}
+
+function renderSkeletons(models) {
+  const root = document.getElementById('results');
+  root.innerHTML = models.map(m => {
+    const c = document.createElement('template'); c.innerHTML = card(m, 'generating').trim();
+    const el = c.content.firstElementChild;
+    el.querySelector('[data-body]').innerHTML = `
+      <div class="space-y-2.5 py-1">
+        <div class="skeleton h-3 w-11/12"></div><div class="skeleton h-3 w-full"></div>
+        <div class="skeleton h-3 w-9/12"></div><div class="skeleton h-3 w-10/12"></div>
+        <div class="skeleton h-3 w-6/12"></div><div class="skeleton h-3 w-8/12"></div>
+      </div>`;
+    el.querySelector('[data-metrics]').innerHTML = metricChip('⏱','время','…') + metricChip('🔢','токены','…') + metricChip('💰','стоимость','…');
+    return el.outerHTML;
+  }).join('');
+}
+
+function renderResults(results) {
+  const root = document.getElementById('results');
+  root.innerHTML = results.map(r => {
+    if (r.error) {
+      const c = document.createElement('template'); c.innerHTML = card(r.model).trim();
+      const el = c.content.firstElementChild;
+      el.querySelector('[data-metrics]').innerHTML = metricChip('⏱','время','—') + metricChip('🔢','токены','—') + metricChip('💰','стоимость','—');
+      el.querySelector('[data-body]').innerHTML = `<div class="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 p-3 text-rose-700 dark:text-rose-300 text-xs break-words">✗ ${escapeHtml(r.error)}</div>`;
+      el.querySelector('[data-raw]').textContent = r.error;
+      return el.outerHTML;
+    }
+    const c = document.createElement('template'); c.innerHTML = card(r.model).trim();
+    const el = c.content.firstElementChild;
+    el.querySelector('[data-metrics]').innerHTML =
+      metricChip('⏱','время', r.latency_s.toFixed(2) + ' с', 'text-indigo-600 dark:text-indigo-300') +
+      metricChip('🔢','токены', `${r.prompt_tokens} in / ${r.completion_tokens} out`) +
+      metricChip('💰','стоимость', fmtCost(r.cost_rub), 'text-emerald-600 dark:text-emerald-300');
+    el.querySelector('[data-body]').appendChild(md(r.content));
+    el.querySelector('[data-raw]').textContent = r.content;
+    el.querySelector('[data-raw]').classList.add('hidden');
+    return el.outerHTML;
+  }).join('');
+  bindCopyButtons();
+}
+
+function fmtCost(c) {
+  if (!c) return '0 ₽';
+  return (c < 0.01 ? c.toFixed(4) : c.toFixed(2)) + ' ₽';
+}
+
+function renderError(models, msg) {
+  const root = document.getElementById('results');
+  root.innerHTML = models.map(m => {
+    const el = c.content.firstElementChild;
+    el.querySelector('[data-body]').innerHTML = `<div class="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 p-3 text-rose-700 dark:text-rose-300 text-xs break-words">✗ ${escapeHtml(msg)}</div>`;
+    el.querySelector('[data-raw]').textContent = msg;
+    return el.outerHTML;
+  }).join('');
+}
+
+function bindCopyButtons() {
+  document.querySelectorAll('.copy-btn').forEach(b => {
+    b.onclick = () => {
+      const cardEl = b.closest('div.fade-in');
+      const raw = cardEl.querySelector('[data-raw]').textContent;
+      navigator.clipboard.writeText(raw).then(() => {
+        const old = b.textContent; b.textContent = '✓ Скопировано';
+        setTimeout(() => b.textContent = old, 1500);
+      });
+    };
+  });
+}
+
+loadConfig();
+</script>
+</body>
+</html>

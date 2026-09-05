@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "comment": "Цены за 1М токенов, руб. с НДС. Источник: developers.sber.ru/docs/ru/gigachat/tariffs/individual-tariffs (редакция с 01.09.2026): пакеты Lite 20М/1300₽, Pro 3М/1500₽, Max 3М/1950₽, единая цена на input+output. Отредактируйте под актуальные тарифы; для freemium-токенов ставьте 0.",
+    "unit": "RUB per 1M tokens",
+    "verified": "2026-09-05"
+  },
+  "models": {
+    "default": { "input": 75.0, "output": 75.0 },
+    "GigaChat": { "input": 65.0, "output": 65.0 },
+    "GigaChat-2": { "input": 65.0, "output": 65.0 },
+    "GigaChat-Plus": { "input": 65.0, "output": 65.0 },
+    "GigaChat-Pro": { "input": 500.0, "output": 500.0 },
+    "GigaChat-2-Pro": { "input": 500.0, "output": 500.0 },
+    "GigaChat-2-Max": { "input": 650.0, "output": 650.0 },
+    "GigaChat-3-Ultra": { "input": 0, "output": 0, "_note": "Freemium для физлиц; платного тарифа пока нет" },
+    "Embeddings": { "input": 14.0, "output": 0 },
+    "Embeddings-2": { "input": 14.0, "output": 0 },
+    "EmbeddingsGigaR": { "input": 14.0, "output": 0 },
+    "GigaEmbeddings-3B-2025-09": { "input": 14.0, "output": 0 }
+  }
+}

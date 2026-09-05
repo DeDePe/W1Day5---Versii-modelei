@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Секреты и локальная конфигурация — НЕ коммитить!
+GigaChat API settings.txt
+GigaChat API models.txt
+.env
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Логи и временные файлы
+*.log
+*.tmp
+Проверочный промпт.txt
