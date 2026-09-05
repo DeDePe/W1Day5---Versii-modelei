@@ -2,7 +2,7 @@
 
 Локальное веб-приложение для сравнительного тестирования (бенчмаркинга) моделей GigaChat: один промпт — три модели — параллельные запросы — метрики и стоимость в удобном 3-колоночном интерфейсе.
 
-![stack](https://img.shields.io/badge/Python-3.10+-blue) ![fastapi](https://img.shields.io/badge/FastAPI-0.115+-green)
+![stack](https://img.shields.io/badge/Python-3.10+-blue) ![fastapi](https://img.shields.io/badge/FastAPI-0.115+-green) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Возможности
 
